@@ -100,7 +100,7 @@ public class Mage implements AbstractClass {
 
         Location loc=player.getPlayer().getLocation();
 
-        loc.setY(loc.getY());
+        loc.setY(loc.getY()+2);
 
         Block block = Objects.requireNonNull(Bukkit.getWorld("world")).getBlockAt((int )loc.getX(),(int) loc.getY(),(int) loc.getZ());
         block.setType(Material.ICE);

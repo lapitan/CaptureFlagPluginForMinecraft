@@ -67,6 +67,8 @@ public class TestCommand extends AbstractCommand {
 
         player.sendMessage(String.valueOf(Objects.requireNonNull(boss.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getValue()));
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(CaptureBase.getInstance(), bossBar::removeAll,100);
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(CaptureBase.getInstance(),()->{bossBar.setColor(BarColor.PURPLE);},100);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(CaptureBase.getInstance(), bossBar::removeAll,200);
     }
 }

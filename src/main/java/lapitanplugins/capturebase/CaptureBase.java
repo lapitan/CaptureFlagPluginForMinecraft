@@ -4,14 +4,16 @@ import lapitanplugins.capturebase.Events.PlayerActionsBeforeStart;
 import lapitanplugins.capturebase.Events.PlayerActionsWhileMainPart;
 import lapitanplugins.capturebase.Events.PlayerActionsWhilePreparing;
 import lapitanplugins.capturebase.commands.*;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public final class CaptureBase extends JavaPlugin {
 
@@ -37,7 +39,7 @@ public final class CaptureBase extends JavaPlugin {
         isStarted=false;
         isFullStarted=false;
         secondsPassed=0;
-        Boss boss= new Boss();
+        boss= new Boss();
         allPlayers=new ArrayList<>();
 
         blue=new Team(Color.BLUE,"§9");
@@ -124,7 +126,61 @@ public final class CaptureBase extends JavaPlugin {
 
     public void gameOver(Team winner, Team loser){
 
-        
+        winner.getPlayers().stream()
+                .map(CaptureBasePlayer::getPlayer)
+                .forEach(player->{
+                    player.sendTitle(winner.getColorCode()+"ВАША КОМАНДА ПОБЕДИЛА","",10,200,10);
+                    Bukkit.getScheduler().runTaskAsynchronously(this,()->{
+                        for (int i = 0; i < 10; i++) {
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(this,()->{player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP,0.5F,1.0F);
+                                Firework firework=(Firework) Objects.requireNonNull(Bukkit.getWorld("world")).spawnEntity(player.getLocation(), EntityType.FIREWORK);
+                                FireworkMeta fireworkMeta= firework.getFireworkMeta();
+
+                                FireworkEffect.Type fireworkType= FireworkEffect.Type.BALL;
+                                FireworkEffect fireworkEffect=FireworkEffect.builder().with(fireworkType).withColor(winner.getColor()).build();
+
+                                fireworkMeta.addEffect(fireworkEffect);
+                                fireworkMeta.setPower(8);
+
+                                firework.setFireworkMeta(fireworkMeta);
+
+                                Bukkit.getScheduler().scheduleSyncDelayedTask(CaptureBase.getInstance(), firework::detonate,20);},0);
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    });
+                });
+
+        loser.getPlayers().stream()
+                .map(CaptureBasePlayer::getPlayer)
+                .forEach(player->{
+                    player.sendTitle(loser.getColorCode()+"ВАША КОМАНДА ПРОИГРАЛА","",10,200,10);
+                    Bukkit.getScheduler().runTaskAsynchronously(this,()->{
+                        for (int i = 0; i < 10; i++) {
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(this,()->{player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP,0.5F,1.0F);
+                                Firework firework=(Firework) Objects.requireNonNull(Bukkit.getWorld("world")).spawnEntity(player.getLocation(), EntityType.FIREWORK);
+                                FireworkMeta fireworkMeta= firework.getFireworkMeta();
+
+                                FireworkEffect.Type fireworkType= FireworkEffect.Type.BALL;
+                                FireworkEffect fireworkEffect=FireworkEffect.builder().with(fireworkType).withColor(loser.getColor()).build();
+
+                                fireworkMeta.addEffect(fireworkEffect);
+                                fireworkMeta.setPower(8);
+
+                                firework.setFireworkMeta(fireworkMeta);
+
+                                Bukkit.getScheduler().scheduleSyncDelayedTask(CaptureBase.getInstance(), firework::detonate,20);},0);
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    });
+                });
 
     }
 
@@ -157,6 +213,8 @@ public final class CaptureBase extends JavaPlugin {
         }
         doBossTick();
         doBossRespawn();
+        doMobTick();
+
     }
     private void doBossTick(){
         if(!boss.isBossSpawned()) return;
@@ -170,7 +228,12 @@ public final class CaptureBase extends JavaPlugin {
         if(boss.isBossSpawned()) return;
         if(secondsPassed!=boss.getBossRespawn()) return;
         boss.spawnBoss();
+    }
 
+    private void doMobTick(){
+        if (secondsPassed%90!=0) return;
+        blue.doMobSpawn();
+        red.doMobSpawn();;
     }
 
     public ArrayList<CaptureBasePlayer> getAllPlayers(){

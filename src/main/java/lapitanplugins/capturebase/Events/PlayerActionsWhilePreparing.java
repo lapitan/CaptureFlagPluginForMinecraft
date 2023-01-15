@@ -66,7 +66,7 @@ public class PlayerActionsWhilePreparing implements Listener {
         }
         else {
             if (block.getType() != Material.BLUE_WOOL && block.getType() != Material.RED_WOOL && block.getType()!= Material.FIRE) {
-               block.setType(block.getType());
+               e.setCancelled(true);
             }
         }
     }

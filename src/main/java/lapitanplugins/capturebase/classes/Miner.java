@@ -62,7 +62,7 @@ public class Miner implements AbstractClass {
     public void skill3(CaptureBasePlayer player, Object[] someObjects) throws NotEnoughManaException, WrongClickedBlockException, CaptureBaseException {
         //heal flag
         int l=player.getPlayer().getLevel();
-        if(l<20){
+        if(l<10){
             throw new NotEnoughManaException("not enough mana");
         }
 

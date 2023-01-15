@@ -1,6 +1,8 @@
 package lapitanplugins.capturebase;
 
 import lapitanplugins.capturebase.boss.CurrSkillSet;
+import lapitanplugins.capturebase.boss.FirstSkillSet;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -15,6 +17,8 @@ import org.bukkit.entity.Evoker;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Spellcaster;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.Objects;
 
@@ -30,10 +34,12 @@ public class Boss {
 
     private CurrSkillSet skillSet;
 
+    double bossMaxHealth;
+
 
 
     public Boss() {
-        bossRespawn=600;
+        bossRespawn=30;
         bossSpawned=false;
     }
 
@@ -81,11 +87,19 @@ public class Boss {
 
         Location location=bossSpawn.getLocation();
         location.setY(bossSpawn.getY()+1);
+        location.setX(bossSpawn.getX()+0.5);
+        location.setZ(bossSpawn.getZ()+0.5);
 
         evoker= (Evoker) Objects.requireNonNull(Bukkit.getWorld("world")).spawnEntity(location, EntityType.EVOKER);
         evoker.setCustomName("Boss Of The GYM");
         AttributeInstance attributeInstance= evoker.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-        Objects.requireNonNull(attributeInstance).setBaseValue(900.0D+ (int)((CaptureBase.getInstance().getSecondsPassed()/6.0))*2);
+        bossMaxHealth=900.0D+ (int)((CaptureBase.getInstance().getSecondsPassed()/6.0))*2;
+
+        Objects.requireNonNull(attributeInstance).setBaseValue(bossMaxHealth);
+        evoker.setHealth(bossMaxHealth);
+        evoker.setAI(false);
+        evoker.setRemoveWhenFarAway(false);
+
         evoker.setSpell(Spellcaster.Spell.NONE);
 
         bossBar=Bukkit.createBossBar("Boss КАЧАЛКИ", BarColor.GREEN, BarStyle.SEGMENTED_6);
@@ -93,6 +107,7 @@ public class Boss {
         bossBar.setVisible(true);
 
         CaptureBase.getInstance().getAllPlayers().forEach(player -> bossBar.addPlayer(player.getPlayer()));
+        skillSet = new FirstSkillSet();
 
         bossSpawned=true;
     }
@@ -105,14 +120,14 @@ public class Boss {
 
         if(evoker.getHealth()== Objects.requireNonNull(evoker.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getValue()) return;
 
-        if(evoker.getHealth()/6>=skillSet.getCurrStageNumb()){
+        if(Math.floor(evoker.getHealth()/(bossMaxHealth/6))>skillSet.getCurrStageNumb()){
             skillSet= skillSet.shiftBackwards();
-            return;
         }
-        if(evoker.getHealth()/6<=skillSet.getCurrStageNumb()){
+        if(Math.floor(evoker.getHealth()/(bossMaxHealth/6))<skillSet.getCurrStageNumb()){
             skillSet= skillSet.shiftForward();
         }
-        if(evoker.isDead()){
+
+        if (evoker.getHealth()<=0||evoker.isDead()){
             onDeath();
         }
 
@@ -120,16 +135,23 @@ public class Boss {
     }
 
     public void onDeath(){
+
         Location location= evoker.getLocation();
         Item item= (Item) Objects.requireNonNull(Bukkit.getWorld("world")).spawnEntity(location,EntityType.DROPPED_ITEM);
         item.setItemStack(new ItemStack(Material.NETHER_STAR,1));
 
         bossRespawn=CaptureBase.getInstance().getSecondsPassed()+300+(int)(Math.random()*10000)%300;
         bossSpawned=false;
+
+        evoker.setHealth(0);
+        evoker=null;
+
+        bossBar.removeAll();
     }
 
     public void regen(){
-        evoker.setHealth(evoker.getHealth()+1);
+        if (evoker.getHealth()>bossMaxHealth-3) return;
+        evoker.setHealth(evoker.getHealth()+3);
         updateBossBar();
     }
 

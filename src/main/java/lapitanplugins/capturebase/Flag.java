@@ -14,43 +14,47 @@ public class Flag {
     private int HP;
     private AreaEffectCloud text;
 
-    public boolean update(){
+    private final String colorCode;
+
+    public boolean update() {
         HP--;
-        text.setCustomName(String.valueOf(HP));
-        if(HP==0) {
-            text.setCustomName("здох");
+        text.setCustomName(colorCode+ HP);
+        if (HP == 0) {
+            text.setCustomName(colorCode + "здох");
             command.setType(Material.REDSTONE_BLOCK);
-            Bukkit.getScheduler().scheduleSyncDelayedTask(CaptureBase.getInstance(),()->{
-                command.setType(Material.REDSTONE_LAMP);
-            },20);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(CaptureBase.getInstance(),
+                    () -> command.setType(Material.REDSTONE_LAMP), 20);
         }
         return HP == 0;
     }
 
-    public Flag(Block block_, Block command, Color color) {
+    public Flag(Block block_, Block command, String colorCode) {
 
         this.block = block_;
         this.command = command;
-        HP=50;
-        Location location=block.getLocation();
-        location.setY(location.getY()+1);
-        text= (AreaEffectCloud) Objects.requireNonNull(Bukkit.getWorld("world")).spawnEntity(location, EntityType.AREA_EFFECT_CLOUD);
+        this.colorCode=colorCode;
+        HP = 50;
+        Location location = block.getLocation();
+        location.setY(location.getY() + 1);
+        location.setX(location.getX() + 0.5F);
+        location.setZ(location.getZ() + 0.5F);
+        text = (AreaEffectCloud) Objects.requireNonNull(Bukkit.getWorld("world")).spawnEntity(location, EntityType.AREA_EFFECT_CLOUD);
         text.setDuration(2000000000);
-        text.setColor(color);
-        text.setCustomName(String.valueOf(HP));
+        text.setCustomName(colorCode + HP);
         text.setParticle(Particle.BLOCK_CRACK, Material.AIR.createBlockData());
         text.setCustomNameVisible(true);
 
     }
 
     @Override
-    public boolean equals(Object object){
-        if(object instanceof Flag) {
+    public boolean equals(Object object) {
+        if (object instanceof Flag) {
             Flag newFlag = (Flag) object;
             return newFlag.block.equals(block);
-        }if(object instanceof Block){
-            Block newBlock=(Block) object;
-            return  newBlock.equals(block);
+        }
+        if (object instanceof Block) {
+            Block newBlock = (Block) object;
+            return newBlock.equals(block);
         }
         return false;
     }
